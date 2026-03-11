@@ -1,0 +1,13 @@
+# Use official PostgreSQL image
+FROM postgres:15
+
+# Environment variables for default database
+ENV POSTGRES_USER=postgres
+ENV POSTGRES_PASSWORD=task123@
+ENV POSTGRES_DB=task_manager
+
+# Copy initialization SQL scripts
+COPY src/database/init.sql /docker-entrypoint-initdb.d/
+
+# PostgreSQL default port
+EXPOSE 5432
