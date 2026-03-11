@@ -1,0 +1,32 @@
+// .proto file specifies the version of Protocol Buffers syntax being used.
+// Protocol Buffers (protobuf) are used by gRPC to define services, methods and message formats
+syntax = "proto3";
+
+package task;
+
+service TaskService {
+  rpc GetTasks (Empty) returns (TaskList);
+  rpc GetTaskById (TaskRequest) returns (Task);
+  rpc CreateTask (CreateTaskRequest) returns (Task);
+}
+
+message Empty {}
+
+message TaskRequest {
+  string id = 1;
+}
+
+message CreateTaskRequest {
+  string title = 1;
+  string description = 2;
+}
+
+message Task {
+  string id = 1;
+  string title = 2;
+  string description = 3;
+}
+
+message TaskList {
+  repeated Task tasks = 1;
+}
