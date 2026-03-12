@@ -1,24 +1,22 @@
 # Dockerfile Designing 
 
 # Create a postgres based docker file that should be auto initialized on startup. No manual SQL after container runs. 
-
-# Use the official PostgreSQL image
 FROM postgres:latest
 
-# Set default environment variables
 ENV POSTGRES_USER=postgres
 ENV POSTGRES_PASSWORD=postgres
 ENV POSTGRES_DB=taskmanager
 
-# Copy initialization SQL scripts into the special directory
-# PostgreSQL automatically runs these scripts when the container starts for the first time
 COPY src/database/init/ /docker-entrypoint-initdb.d/
 
-# Expose PostgreSQL default port
 EXPOSE 5432
 
+FROM postgres:latest
 
-- Database auto-created on startup - named after your app
+COPY src/database/init/ /docker-entrypoint-initdb.d/
+
+
+# Database auto-created on startup - named after your app
 version: "3.9"
 
 services:
