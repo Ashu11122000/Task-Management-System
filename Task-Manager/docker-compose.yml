@@ -1,67 +1,133 @@
+# Docker Compose version
+# Defines the syntax version for docker-compose configuration
 version: "3.9"
 
 services:
 
+  # PostgreSQL Database Service
   postgres:
+    # Use the official PostgreSQL image from Docker Hub
     image: postgres:latest
+
+    # Custom name for the running container
     container_name: task_manager
+
+    # Automatically restart container if it crashes or Docker restarts
     restart: always
+
+    # Environment variables used by PostgreSQL to create database and user
     environment:
-      POSTGRES_DB: task_manager
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: task123@
+      POSTGRES_DB: task_manager          # Database name created at startup
+      POSTGRES_USER: postgres            # Database username
+      POSTGRES_PASSWORD: task123@        # Database password
+
+    # Expose PostgreSQL port to host machine
     ports:
-      - "5432:5432"
+      - "5432:5432"                      # host_port:container_port
+
+    # Volumes for persistent storage and automatic DB initialization
     volumes:
+      # Persist database data even if container is removed
       - task_manager_data:/var/lib/postgresql/data
+
+      # SQL file executed automatically when container starts first time
       - ./src/database/init.sql:/docker-entrypoint-initdb.d/01-init.sql
+
+      # SQL file for creating indexes after tables
       - ./src/database/indexes.sql:/docker-entrypoint-initdb.d/02-indexes.sql
+
+    # Connect container to custom network
     networks:
       - task-network
 
+
+  # pgAdmin Web Interface Service
   pgadmin:
+    # Official pgAdmin image used for managing PostgreSQL databases
     image: dpage/pgadmin4
+
+    # Container name for pgAdmin service
     container_name: pgadmin-contai
+
+    # Restart container automatically if stopped
     restart: always
+
+    # Default login credentials for pgAdmin dashboard
     environment:
       PGADMIN_DEFAULT_EMAIL: admin@taskmanager.com
       PGADMIN_DEFAULT_PASSWORD: admin123
+
+    # Expose pgAdmin web interface
     ports:
-      - "5050:80"
+      - "5050:80"                        # Access pgAdmin via http://localhost:5050
+
+    # Ensures PostgreSQL container starts before pgAdmin
     depends_on:
       - postgres
+
+    # Persistent storage for pgAdmin configuration and sessions
     volumes:
       - pgadmin_data:/var/lib/pgadmin
+
+    # Connect to the same network as PostgreSQL
     networks:
       - task-network
 
+
+  # Backend Application Service (Node.js API)
   app:
+    # Build Docker image from Dockerfile located in project root
     build: .
+
+    # Custom container name
     container_name: task-manager-api
+
+    # Restart container automatically on failure
     restart: always
+
+    # Ensure database starts before backend service
     depends_on:
       - postgres
+
+    # Expose backend API port
     ports:
       - "5000:5000"
+
+    # Environment variables used by Node.js backend
     environment:
       PORT: 5000
-      PGHOST: postgres
+      PGHOST: postgres                  # Database host (service name in Docker network)
       PGUSER: postgres
       PGPORT: 5432
       PGDATABASE: task_manager
       PGPASSWORD: task123@
-      JWT_SECRET: taskmanagersecret
-      JWT_EXPIRES_IN: 30d
+      JWT_SECRET: taskmanagersecret    # Secret key for JWT authentication
+      JWT_EXPIRES_IN: 30d              # Token expiration time
+
+    # Mount local project directory inside container
     volumes:
       - .:/app
+
+    # Run backend using nodemon for development auto-reload
     command: npx nodemon src/server.js
+
+    # Connect backend to the same Docker network
     networks:
       - task-network
 
 
+# Named volumes for persistent data storage
 volumes:
+
+  # Stores PostgreSQL database data
   task_manager_data:
+
+  # Stores pgAdmin user settings and configuration
   pgadmin_data:
 
+
+# Custom Docker network for communication between services
 networks:
+
+  # Internal network allowing containers to communicate via service names
   task-network:
